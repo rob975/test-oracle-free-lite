@@ -1,0 +1,35 @@
+name: CI
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  test-oracle-free:
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: [23.6.0.0-lite, latest-lite]
+        runtime: [docker, podman]
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: run container
+        run: >-
+          ${{ matrix.runtime }} run -d --name oracle-db
+          container-registry.oracle.com/database/free:${{ matrix.tag }}
+      - name: wait for alert.log tail
+        run: |
+          retry=1
+          until { ${{ matrix.runtime }} logs oracle-db 2>/dev/null | grep -q "^The following .* tail .* alert\.log:$"; } || [ $retry -gt 30 ]; do
+            sleep 5
+            ((retry++))
+          done
+      - name: test database is ready
+        run: |
+          echo "::group::Logs"
+          ${{ matrix.runtime }} logs oracle-db
+          echo "::endgroup::"
+          { ${{ matrix.runtime }} logs oracle-db 2>/dev/null | grep -q "^DATABASE IS READY TO USE!$"; } && exit 0 || exit 1
