@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tag: [23.8.0.0-lite, 23.9.0.0-lite]
+        tag: [23.9.0.0-lite, 23.26.0.0-lite]
         runtime: [docker, podman]
         os: [ubuntu-22.04, ubuntu-24.04, ubuntu-22.04-arm, ubuntu-24.04-arm]
     runs-on: ${{ matrix.os }}
